@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -lt 1 ]]; then
+  printf 'usage: task-init "Task title"\n' >&2
+  exit 2
+fi
+
+title="$*"
+date_part="$(date +%F)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+template="$script_dir/../../templates/task.md"
+
+slug="$(
+  printf '%s' "$title" |
+    tr '[:upper:]' '[:lower:]' |
+    sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-+/-/g'
+)"
+
+if [[ -z "$slug" ]]; then
+  printf 'could not derive task slug from title\n' >&2
+  exit 1
+fi
+
+target=".tasks/${date_part}-${slug}.md"
+
+if [[ -e "$target" ]]; then
+  printf '%s already exists; leaving it unchanged.\n' "$target"
+  exit 0
+fi
+
+if [[ ! -f "$template" ]]; then
+  printf 'missing template: %s\n' "$template" >&2
+  exit 1
+fi
+
+mkdir -p .tasks
+awk -v title="$title" -v date_part="$date_part" -v slug="$slug" '
+  {
+    gsub(/\{\{TITLE\}\}/, title)
+    gsub(/\{\{DATE\}\}/, date_part)
+    gsub(/\{\{SLUG\}\}/, slug)
+    print
+  }
+' "$template" >"$target"
+
+printf 'created %s\n' "$target"

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Project Init"
-  short_description: "Create project AGENTS.md files."
-  default_prompt: "Use $project-init to create or refresh this repository's AGENTS.md."
-policy:
-  allow_implicit_invocation: true

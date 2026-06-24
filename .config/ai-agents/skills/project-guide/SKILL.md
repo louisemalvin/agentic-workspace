@@ -1,9 +1,9 @@
 ---
-name: project-init
-description: Create or refresh project-level AGENTS.md files for agent-agnostic coding workflows. Use when entering a repository without AGENTS.md, bootstrapping a project for multiple harnesses, standardizing Claude/Codex/OpenCode/Antigravity handoff, or separating stable project context from task artifacts.
+name: project-guide
+description: Create or refresh project-level AGENTS.md guides for agent-agnostic coding workflows. Use when entering a repository without AGENTS.md, bootstrapping a project for multiple harnesses, standardizing Claude/Codex/OpenCode/Antigravity setup, or separating stable project context from task artifacts.
 ---
 
-# Project Init
+# Project Guide
 
 ## Purpose
 
@@ -19,7 +19,7 @@ Use this skill to create or update a project-local `AGENTS.md` that any coding h
 4. Inspect the repository before filling sections. Use package files, README, config files, tests, and directory layout. Do not guess commands.
 5. Keep task-specific decisions out of `AGENTS.md`. Put active planning in `.tasks/*.md`.
 6. Keep `AGENTS.md` concise. Add only facts that should remain useful across many sessions.
-7. Add the planning pipeline rules below so agents can move from discussion to artifact without waiting for a special user phrase.
+7. Include the workflow rules below so agents know to use task artifacts without waiting for a special user phrase.
 
 ## AGENTS.md Structure
 

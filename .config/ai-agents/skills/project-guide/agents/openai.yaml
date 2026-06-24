@@ -1,0 +1,6 @@
+interface:
+  display_name: "Project Guide"
+  short_description: "Create or refresh project AGENTS.md."
+  default_prompt: "Use $project-guide to create or refresh this repository's AGENTS.md."
+policy:
+  allow_implicit_invocation: true

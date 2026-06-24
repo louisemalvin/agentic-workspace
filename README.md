@@ -1,10 +1,10 @@
 # Persistent Agentic Workspace
 
-This repository is a private dotfiles baseline for terminal-first AI coding work. It centralizes terminal settings, tmux persistence, and shared agent memory so local GPU terminals and mobile SSH clients attach to the same durable workspace.
+This repository is a portable dotfiles baseline for terminal-first AI coding work. It centralizes terminal settings, tmux persistence, shared agent preferences, project guides, and task artifacts so different coding harnesses can share one workflow across machines.
 
 ## Architectural Overview
 
-The operating model is **Captain & First Mate**. One primary agent owns the task boundary, keeps the plan coherent, and writes final decisions into durable files. Supporting agents can investigate, build, or review, but their output is treated as bounded evidence rather than a new source of authority.
+The operating model is **coordinator and workers**. One user-facing coordinator owns the task boundary, keeps the plan coherent, and writes final decisions into durable files. Worker sessions can investigate, build, or validate, but their output is treated as bounded evidence rather than a new source of authority.
 
 This avoids volatile chained-agent telephone loops, where each handoff compresses intent, loses filesystem state, and degrades after large context windows. A 180k-token context can still become unreliable when every agent carries an approximate transcript instead of a crisp boundary.
 
@@ -15,18 +15,23 @@ git worktree add ../feature-agent feature-agent
 git worktree add ../review-agent review-agent
 ```
 
-That gives each agent an isolated file boundary, independent build artifacts, and clean diffs. The Captain reviews changes through Git rather than through a lossy conversation chain.
+That gives each agent an isolated file boundary, independent build artifacts, and clean diffs. The coordinator reviews changes through Git and task artifacts rather than through a lossy conversation chain.
 
 ## Repository Layout
 
 ```text
 .config/
   ai-agents/global_memory.md
-  ai-agents/skills/project-init/SKILL.md
+  ai-agents/skills/project-guide/SKILL.md
+  ai-agents/skills/task-plan/SKILL.md
   ghostty/config
   tmux/tmux.conf
 .local/
   bin/agent-init
+  bin/task-init
+templates/
+  AGENTS.md
+  task.md
 install.sh
 README.md
 ```
@@ -50,6 +55,7 @@ The installer is idempotent. It creates the expected configuration directories a
 ~/.config/ghostty/config
 ~/.config/tmux/tmux.conf
 ~/.local/bin/agent-init
+~/.local/bin/task-init
 ~/.config/ai-agents/global_memory.md
 ~/.config/ai-agents/AGENTS.md
 ~/.config/AGENTS.md
@@ -65,18 +71,19 @@ The installer is idempotent. It creates the expected configuration directories a
 ~/.gemini/AGENTS.md
 ```
 
-It also links the shared `project-init` skill into neutral and common harness-specific skill directories:
+It also links shared skills into neutral and common harness-specific skill directories:
 
 ```text
-~/.config/ai-agents/skills/project-init
-~/.agents/skills/project-init
-~/.codex/skills/project-init
-~/.config/codex/skills/project-init
-~/.claude/skills/project-init
-~/.config/claude/skills/project-init
-~/.config/opencode/skills/project-init
-~/.config/antigravity/skills/project-init
-~/.gemini/skills/project-init
+~/.config/ai-agents/skills/project-guide
+~/.config/ai-agents/skills/task-plan
+~/.agents/skills/<skill>
+~/.codex/skills/<skill>
+~/.config/codex/skills/<skill>
+~/.claude/skills/<skill>
+~/.config/claude/skills/<skill>
+~/.config/opencode/skills/<skill>
+~/.config/antigravity/skills/<skill>
+~/.gemini/skills/<skill>
 ```
 
 Harnesses that support this skill layout can load the skill directly. Harnesses that do not support skills still share the same global `AGENTS.md` and can use `agent-init` as the fallback project bootstrap command.
@@ -99,11 +106,29 @@ agent-init
 
 This creates `AGENTS.md` only when it is missing. The local file is for stable project facts: stack, commands, architecture, workflow rules, and known traps. Task-specific planning belongs in `.tasks/*.md` so long planning sessions can be compressed into durable artifacts and resumed by any harness.
 
-The installed `project-init` skill guides agents to do the same thing automatically: check for `AGENTS.md`, create it only when missing, keep it concise, and move task-specific context into `.tasks/*.md`.
+The installed `project-guide` skill guides agents to do the same thing automatically: check for `AGENTS.md`, create it only when missing, keep it concise, and move task-specific context into `.tasks/*.md`.
 
-Agents should not wait for a special phrase like "freeze the plan" before creating a task artifact. Once discussion has produced a concrete implementation direction, the agent should create or update `.tasks/<date>-<slug>.md`, then use that artifact as the implementation handoff.
+To create a task artifact directly:
+
+```bash
+task-init "Improve onboarding empty state"
+```
+
+This creates `.tasks/<date>-improve-onboarding-empty-state.md` from `templates/task.md`.
+
+The installed `task-plan` skill tells agents not to wait for a special phrase like "freeze the plan" before creating a task artifact. Once discussion has produced a concrete implementation direction, the agent should create or update `.tasks/<date>-<slug>.md`, then use that artifact as the implementation handoff.
 
 Visual planning tools such as Lavish can fit into this same pipeline. They improve review by making options easier to inspect than terminal chat, but the final decisions should still be written back into the active `.tasks` artifact so any harness can continue.
+
+## Workflow Model
+
+Keep the concepts separate:
+
+- Personas: coordinator, implementer, or other session roles.
+- Skills: reusable procedures such as `project-guide` and `task-plan`.
+- Runtime: tmux sessions, Git worktrees, and shell commands.
+
+For one task, talk to one main agent. It may use `task-plan` or a visual planning tool, then implement from the resulting artifact. For parallel tasks, a coordinator can create worktrees and spawn implementer sessions, but the handoff should still be file-based.
 
 ## Terminal Persistence
 

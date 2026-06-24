@@ -2,6 +2,8 @@
 set -euo pipefail
 
 target="${1:-AGENTS.md}"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+template="$script_dir/../../templates/AGENTS.md"
 
 if [[ -e "$target" ]]; then
   printf '%s already exists; leaving it unchanged.\n' "$target"
@@ -10,61 +12,13 @@ fi
 
 project_name="$(basename "$PWD")"
 
-cat >"$target" <<EOF
-# ${project_name} Agent Guide
+if [[ ! -f "$template" ]]; then
+  printf 'missing template: %s\n' "$template" >&2
+  exit 1
+fi
 
-## Project
-
-Describe what this project is and who it serves.
-
-## Stack
-
-- Runtime:
-- Framework:
-- Package manager:
-- Database:
-- Deployment:
-
-## Commands
-
-- Install:
-- Dev:
-- Test:
-- Lint:
-- Typecheck:
-- Build:
-
-## Architecture
-
-List the important directories and what they own.
-
-## Workflow
-
-- Keep task-specific planning in .tasks/*.md, not in this file.
-- When discussion produces a concrete implementation direction, create or update a task artifact automatically.
-- Do not require the user to say "freeze", "handoff", or "write a spec".
-- Before implementation, make sure the active task artifact has goal, decisions, acceptance criteria, and verification plan.
-- Update the active task artifact before handing work to another harness.
-- Verify behavior against acceptance criteria before calling work done.
-
-## Task Artifacts
-
-Use .tasks/<date>-<slug>.md for active task plans and handoffs.
-
-Each task artifact should include:
-
-- Goal
-- Context
-- Decisions
-- Acceptance Criteria
-- Implementation Plan
-- Verification Plan
-- Status
-- Handoff Notes
-
-## Known Traps
-
-- Add repeated agent mistakes here after they happen.
-EOF
+awk -v project_name="$project_name" '
+  { gsub(/\{\{PROJECT_NAME\}\}/, project_name); print }
+' "$template" >"$target"
 
 printf 'created %s\n' "$target"

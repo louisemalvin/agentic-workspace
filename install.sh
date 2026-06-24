@@ -32,10 +32,24 @@ link_dir() {
   printf 'linked %s -> %s\n' "$target" "$source"
 }
 
+install_skill() {
+  local skill_name="$1"
+  local skill_source="$repo_root/.config/ai-agents/skills/$skill_name"
+
+  link_dir "$skill_source" "$config_home/ai-agents/skills/$skill_name"
+  link_dir "$skill_source" "$HOME/.agents/skills/$skill_name"
+  link_dir "$skill_source" "$HOME/.codex/skills/$skill_name"
+  link_dir "$skill_source" "$config_home/codex/skills/$skill_name"
+  link_dir "$skill_source" "$HOME/.claude/skills/$skill_name"
+  link_dir "$skill_source" "$config_home/claude/skills/$skill_name"
+  link_dir "$skill_source" "$config_home/opencode/skills/$skill_name"
+  link_dir "$skill_source" "$config_home/antigravity/skills/$skill_name"
+  link_dir "$skill_source" "$HOME/.gemini/skills/$skill_name"
+}
+
 main() {
   local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
   local memory_source="$repo_root/.config/ai-agents/global_memory.md"
-  local project_init_skill="$repo_root/.config/ai-agents/skills/project-init"
 
   ensure_dir "$HOME/.local/bin"
   ensure_dir "$HOME/.agents"
@@ -62,6 +76,7 @@ main() {
   link_file "$repo_root/.config/ghostty/config" "$config_home/ghostty/config"
   link_file "$repo_root/.config/tmux/tmux.conf" "$config_home/tmux/tmux.conf"
   link_file "$repo_root/.local/bin/agent-init" "$HOME/.local/bin/agent-init"
+  link_file "$repo_root/.local/bin/task-init" "$HOME/.local/bin/task-init"
   link_file "$memory_source" "$config_home/ai-agents/global_memory.md"
   link_file "$memory_source" "$config_home/ai-agents/AGENTS.md"
 
@@ -79,15 +94,8 @@ main() {
   link_file "$memory_source" "$HOME/.gemini/AGENTS.md"
 
   # Install shared skills into common harness-specific and neutral locations.
-  link_dir "$project_init_skill" "$config_home/ai-agents/skills/project-init"
-  link_dir "$project_init_skill" "$HOME/.agents/skills/project-init"
-  link_dir "$project_init_skill" "$HOME/.codex/skills/project-init"
-  link_dir "$project_init_skill" "$config_home/codex/skills/project-init"
-  link_dir "$project_init_skill" "$HOME/.claude/skills/project-init"
-  link_dir "$project_init_skill" "$config_home/claude/skills/project-init"
-  link_dir "$project_init_skill" "$config_home/opencode/skills/project-init"
-  link_dir "$project_init_skill" "$config_home/antigravity/skills/project-init"
-  link_dir "$project_init_skill" "$HOME/.gemini/skills/project-init"
+  install_skill "project-guide"
+  install_skill "task-plan"
 
   printf '\nDotfiles installation complete.\n'
 }
