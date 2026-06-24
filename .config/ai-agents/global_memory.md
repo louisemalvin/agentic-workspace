@@ -1,12 +1,12 @@
-# Global Agent Memory
+# Global Agent Preferences
 
-- Treat this repository as the shared baseline for every coding agent on this machine.
-- Default to fast execution assumptions: measure automation in seconds or minutes, not human-estimated task blocks.
-- Before refactoring, reproduce the bug or behavior end to end and keep a failing test or command as the proof point.
-- Prefer small, verifiable edits over broad rewrites; preserve existing architecture unless evidence says it is the constraint.
-- Use typed interfaces, explicit error handling, and defensive boundary checks for untrusted inputs.
-- Keep formatting deterministic: run the project formatter and avoid style-only churn outside touched code.
-- Favor clear control flow, early returns, named helpers, and simple data structures over clever compression.
-- Never commit secrets, private keys, tokens, or local machine credentials.
-- Document operational decisions where future agents would otherwise need to rediscover context.
-- When blocked, record the exact command, error output, environment assumption, and next recovery step.
+- Never use mdash (—). Always use a plain dash (-) for punctuation, list items, and text formatting.
+- When making technical decisions, do not give too much weight to development cost or engineering effort. Prioritize clean architecture, long-term scalability, and maintainability.
+- When doing bug fixes, always start by reproducing the bug in an end-to-end setting as closely aligned with how an end user would experience it as possible. Lean heavily into end-to-end testing profiles rather than isolation unit testing.
+- Write explicit error definitions and keep error handling defensive across mutations.
+- Keep PR descriptions concise and structurally formatted using plain markdown headings. Include testing evidence tags.
+
+# References
+
+- opinions.mmd
+- axi.md
