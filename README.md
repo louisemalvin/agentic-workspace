@@ -24,11 +24,13 @@ That gives each agent an isolated file boundary, independent build artifacts, an
   ai-agents/global_memory.md
   ghostty/config
   tmux/tmux.conf
+.local/
+  bin/agent-init
 install.sh
 README.md
 ```
 
-`global_memory.md` is the shared system baseline for child agents. `install.sh` links it into common agent prompt locations so Claude, Codex, Gemini, and compatible tools read the same foundational rules.
+`global_memory.md` is the shared system baseline for child agents. `install.sh` links it into common global prompt locations, including neutral `AGENTS.md` paths, so Claude, Codex, Gemini, OpenCode-compatible, and compatible tools can share the same foundational rules.
 
 ## Installation Protocol
 
@@ -46,12 +48,20 @@ The installer is idempotent. It creates the expected configuration directories a
 ```text
 ~/.config/ghostty/config
 ~/.config/tmux/tmux.conf
+~/.local/bin/agent-init
 ~/.config/ai-agents/global_memory.md
+~/.config/ai-agents/AGENTS.md
+~/.config/AGENTS.md
+~/.agents/AGENTS.md
 ~/.config/claude/CLAUDE.md
+~/.config/claude/AGENTS.md
 ~/.claude/CLAUDE.md
+~/.claude/AGENTS.md
 ~/.config/codex/AGENTS.md
 ~/.codex/AGENTS.md
+~/.config/codex/global_memory.md
 ~/.gemini/GEMINI.md
+~/.gemini/AGENTS.md
 ```
 
 Start or reload tmux after installation:
@@ -60,6 +70,17 @@ Start or reload tmux after installation:
 tmux new -s main
 tmux source-file ~/.config/tmux/tmux.conf
 ```
+
+## Project Initialization
+
+Harnesses should not require hand-written project memory before they can work. If a project does not already have local agent memory, run:
+
+```bash
+cd ~/projects/my-project
+agent-init
+```
+
+This creates `AGENTS.md` only when it is missing. The local file is for stable project facts: stack, commands, architecture, workflow rules, and known traps. Task-specific planning belongs in `.tasks/*.md` so long planning sessions can be compressed into durable artifacts and resumed by any harness.
 
 ## Terminal Persistence
 
