@@ -101,6 +101,10 @@ This creates `AGENTS.md` only when it is missing. The local file is for stable p
 
 The installed `project-init` skill guides agents to do the same thing automatically: check for `AGENTS.md`, create it only when missing, keep it concise, and move task-specific context into `.tasks/*.md`.
 
+Agents should not wait for a special phrase like "freeze the plan" before creating a task artifact. Once discussion has produced a concrete implementation direction, the agent should create or update `.tasks/<date>-<slug>.md`, then use that artifact as the implementation handoff.
+
+Visual planning tools such as Lavish can fit into this same pipeline. They improve review by making options easier to inspect than terminal chat, but the final decisions should still be written back into the active `.tasks` artifact so any harness can continue.
+
 ## Terminal Persistence
 
 tmux uses `Ctrl+a` as the prefix. Panes and windows open in the active directory:

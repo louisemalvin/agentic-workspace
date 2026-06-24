@@ -19,6 +19,7 @@ Use this skill to create or update a project-local `AGENTS.md` that any coding h
 4. Inspect the repository before filling sections. Use package files, README, config files, tests, and directory layout. Do not guess commands.
 5. Keep task-specific decisions out of `AGENTS.md`. Put active planning in `.tasks/*.md`.
 6. Keep `AGENTS.md` concise. Add only facts that should remain useful across many sessions.
+7. Add the planning pipeline rules below so agents can move from discussion to artifact without waiting for a special user phrase.
 
 ## AGENTS.md Structure
 
@@ -55,8 +56,26 @@ List important directories and ownership boundaries.
 ## Workflow
 
 - Keep task-specific planning in .tasks/*.md.
+- When discussion produces a concrete implementation direction, create or update a task artifact automatically.
+- Do not require the user to say "freeze", "handoff", or "write a spec".
+- Before implementation, make sure the active task artifact has goal, decisions, acceptance criteria, and verification plan.
 - Update the active task artifact before handing work to another harness.
 - Verify behavior against acceptance criteria before calling work done.
+
+## Task Artifacts
+
+Use `.tasks/<date>-<slug>.md` for active task plans and handoffs.
+
+Each task artifact should include:
+
+- Goal
+- Context
+- Decisions
+- Acceptance Criteria
+- Implementation Plan
+- Verification Plan
+- Status
+- Handoff Notes
 
 ## Known Traps
 
@@ -71,10 +90,11 @@ List important directories and ownership boundaries.
 - Move long conditional instructions into skills or referenced docs.
 - Record repeated mistakes as short `Known Traps` bullets.
 - If a task artifact is missing for active work, create `.tasks/<date>-<slug>.md` instead of expanding `AGENTS.md`.
+- If the user is reviewing options in chat or a visual planning tool, write the final decision back to the active task artifact.
 
 ## Handoff Contract
 
-Before switching harnesses or ending a session, update the active task artifact with:
+Before switching harnesses, starting implementation, or ending a session, update the active task artifact with:
 
 - Current status
 - Files changed
