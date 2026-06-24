@@ -22,6 +22,7 @@ That gives each agent an isolated file boundary, independent build artifacts, an
 ```text
 .config/
   ai-agents/global_memory.md
+  ai-agents/skills/project-init/SKILL.md
   ghostty/config
   tmux/tmux.conf
 .local/
@@ -64,6 +65,22 @@ The installer is idempotent. It creates the expected configuration directories a
 ~/.gemini/AGENTS.md
 ```
 
+It also links the shared `project-init` skill into neutral and common harness-specific skill directories:
+
+```text
+~/.config/ai-agents/skills/project-init
+~/.agents/skills/project-init
+~/.codex/skills/project-init
+~/.config/codex/skills/project-init
+~/.claude/skills/project-init
+~/.config/claude/skills/project-init
+~/.config/opencode/skills/project-init
+~/.config/antigravity/skills/project-init
+~/.gemini/skills/project-init
+```
+
+Harnesses that support this skill layout can load the skill directly. Harnesses that do not support skills still share the same global `AGENTS.md` and can use `agent-init` as the fallback project bootstrap command.
+
 Start or reload tmux after installation:
 
 ```bash
@@ -73,7 +90,7 @@ tmux source-file ~/.config/tmux/tmux.conf
 
 ## Project Initialization
 
-Harnesses should not require hand-written project memory before they can work. If a project does not already have local agent memory, run:
+Harnesses should not require hand-written project context before they can work. If a project does not already have `AGENTS.md`, run:
 
 ```bash
 cd ~/projects/my-project
@@ -81,6 +98,8 @@ agent-init
 ```
 
 This creates `AGENTS.md` only when it is missing. The local file is for stable project facts: stack, commands, architecture, workflow rules, and known traps. Task-specific planning belongs in `.tasks/*.md` so long planning sessions can be compressed into durable artifacts and resumed by any harness.
+
+The installed `project-init` skill guides agents to do the same thing automatically: check for `AGENTS.md`, create it only when missing, keep it concise, and move task-specific context into `.tasks/*.md`.
 
 ## Terminal Persistence
 

@@ -11,7 +11,7 @@ fi
 project_name="$(basename "$PWD")"
 
 cat >"$target" <<EOF
-# ${project_name} Agent Memory
+# ${project_name} Agent Guide
 
 ## Project
 
