@@ -103,4 +103,4 @@ Before switching harnesses, starting implementation, or ending a session, update
 - Errors encountered
 - Next exact step
 
-The next harness should read global memory, project `AGENTS.md`, and the active task artifact. It should not need the prior chat transcript.
+The next harness should read the global `AGENTS.md`, project `AGENTS.md`, and the active task artifact. It should not need the prior chat transcript.

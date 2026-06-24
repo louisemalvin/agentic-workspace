@@ -49,7 +49,7 @@ install_skill() {
 
 main() {
   local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
-  local memory_source="$repo_root/.config/ai-agents/global_memory.md"
+  local global_agents_source="$repo_root/.config/ai-agents/AGENTS.md"
 
   ensure_dir "$HOME/.local/bin"
   ensure_dir "$HOME/.agents"
@@ -77,21 +77,21 @@ main() {
   link_file "$repo_root/.config/tmux/tmux.conf" "$config_home/tmux/tmux.conf"
   link_file "$repo_root/.local/bin/agent-init" "$HOME/.local/bin/agent-init"
   link_file "$repo_root/.local/bin/task-init" "$HOME/.local/bin/task-init"
-  link_file "$memory_source" "$config_home/ai-agents/global_memory.md"
-  link_file "$memory_source" "$config_home/ai-agents/AGENTS.md"
+  link_file "$global_agents_source" "$config_home/ai-agents/AGENTS.md"
+  link_file "$global_agents_source" "$config_home/ai-agents/global_memory.md"
 
-  # Agent prompt entry points intentionally point to one canonical memory file.
-  link_file "$memory_source" "$HOME/.agents/AGENTS.md"
-  link_file "$memory_source" "$config_home/AGENTS.md"
-  link_file "$memory_source" "$config_home/claude/CLAUDE.md"
-  link_file "$memory_source" "$config_home/claude/AGENTS.md"
-  link_file "$memory_source" "$HOME/.claude/CLAUDE.md"
-  link_file "$memory_source" "$HOME/.claude/AGENTS.md"
-  link_file "$memory_source" "$config_home/codex/AGENTS.md"
-  link_file "$memory_source" "$HOME/.codex/AGENTS.md"
-  link_file "$memory_source" "$config_home/codex/global_memory.md"
-  link_file "$memory_source" "$HOME/.gemini/GEMINI.md"
-  link_file "$memory_source" "$HOME/.gemini/AGENTS.md"
+  # Agent prompt entry points intentionally point to one canonical AGENTS.md file.
+  link_file "$global_agents_source" "$HOME/.agents/AGENTS.md"
+  link_file "$global_agents_source" "$config_home/AGENTS.md"
+  link_file "$global_agents_source" "$config_home/claude/CLAUDE.md"
+  link_file "$global_agents_source" "$config_home/claude/AGENTS.md"
+  link_file "$global_agents_source" "$HOME/.claude/CLAUDE.md"
+  link_file "$global_agents_source" "$HOME/.claude/AGENTS.md"
+  link_file "$global_agents_source" "$config_home/codex/AGENTS.md"
+  link_file "$global_agents_source" "$HOME/.codex/AGENTS.md"
+  link_file "$global_agents_source" "$config_home/codex/global_memory.md"
+  link_file "$global_agents_source" "$HOME/.gemini/GEMINI.md"
+  link_file "$global_agents_source" "$HOME/.gemini/AGENTS.md"
 
   # Install shared skills into common harness-specific and neutral locations.
   install_skill "project-guide"

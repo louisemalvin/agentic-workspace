@@ -21,7 +21,7 @@ That gives each agent an isolated file boundary, independent build artifacts, an
 
 ```text
 .config/
-  ai-agents/global_memory.md
+  ai-agents/AGENTS.md
   ai-agents/skills/project-guide/SKILL.md
   ai-agents/skills/task-plan/SKILL.md
   ghostty/config
@@ -36,7 +36,7 @@ install.sh
 README.md
 ```
 
-`global_memory.md` is the shared system baseline for child agents. `install.sh` links it into common global prompt locations, including neutral `AGENTS.md` paths, so Claude, Codex, Gemini, OpenCode-compatible, and compatible tools can share the same foundational rules.
+`.config/ai-agents/AGENTS.md` is the shared global baseline for child agents. `install.sh` links it into common global prompt locations, including harness-specific compatibility paths, so Claude, Codex, Gemini, OpenCode-compatible, and compatible tools can share the same foundational rules.
 
 ## Installation Protocol
 
@@ -56,8 +56,8 @@ The installer is idempotent. It creates the expected configuration directories a
 ~/.config/tmux/tmux.conf
 ~/.local/bin/agent-init
 ~/.local/bin/task-init
-~/.config/ai-agents/global_memory.md
 ~/.config/ai-agents/AGENTS.md
+~/.config/ai-agents/global_memory.md
 ~/.config/AGENTS.md
 ~/.agents/AGENTS.md
 ~/.config/claude/CLAUDE.md
