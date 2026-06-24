@@ -78,7 +78,6 @@ main() {
   link_file "$repo_root/.local/bin/agent-init" "$HOME/.local/bin/agent-init"
   link_file "$repo_root/.local/bin/task-init" "$HOME/.local/bin/task-init"
   link_file "$global_agents_source" "$config_home/ai-agents/AGENTS.md"
-  link_file "$global_agents_source" "$config_home/ai-agents/global_memory.md"
 
   # Agent prompt entry points intentionally point to one canonical AGENTS.md file.
   link_file "$global_agents_source" "$HOME/.agents/AGENTS.md"
@@ -89,7 +88,6 @@ main() {
   link_file "$global_agents_source" "$HOME/.claude/AGENTS.md"
   link_file "$global_agents_source" "$config_home/codex/AGENTS.md"
   link_file "$global_agents_source" "$HOME/.codex/AGENTS.md"
-  link_file "$global_agents_source" "$config_home/codex/global_memory.md"
   link_file "$global_agents_source" "$HOME/.gemini/GEMINI.md"
   link_file "$global_agents_source" "$HOME/.gemini/AGENTS.md"
 
