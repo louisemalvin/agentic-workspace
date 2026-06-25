@@ -58,6 +58,16 @@ install_skill() {
   link_dir "$skill_source" "$HOME/.gemini/skills/$skill_name"
 }
 
+install_bins() {
+  local script
+
+  for script in "$repo_root"/bin/*; do
+    [[ -f "$script" ]] || continue
+    chmod +x "$script"
+    link_file "$script" "$HOME/.local/bin/$(basename "$script")"
+  done
+}
+
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -101,12 +111,7 @@ main() {
   ensure_dir "$HOME/.gemini"
   ensure_dir "$HOME/.gemini/skills"
 
-  chmod +x "$repo_root/bin/agent-init"
-  chmod +x "$repo_root/bin/task-init"
-  chmod +x "$repo_root/bin/task-list"
-  link_file "$repo_root/bin/agent-init" "$HOME/.local/bin/agent-init"
-  link_file "$repo_root/bin/task-init" "$HOME/.local/bin/task-init"
-  link_file "$repo_root/bin/task-list" "$HOME/.local/bin/task-list"
+  install_bins
   link_file "$global_agents_source" "$config_home/ai-agents/AGENTS.md"
 
   # Agent prompt entry points intentionally point to one canonical AGENTS.md file.
@@ -127,7 +132,7 @@ main() {
   install_skill "handoff-contract"
   install_skill "task-resume"
   install_skill "lavish-planning"
-  install_skill "quick-commit"
+  install_skill "git-commit"
 
   printf '\nAgent workflow installation complete.\n'
 }

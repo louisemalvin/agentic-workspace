@@ -18,7 +18,8 @@ The artifact is a compact contract, not a transcript.
 3. Inspect the repo when needed to ground the task in real files and commands.
 4. Once direction is concrete, create or update `.tasks/<date>-<slug>.md`.
 5. Prefer `task-init "<task title>"` when available.
-6. In chat, report the task path, status, and unresolved questions only. Do not print the full artifact unless asked.
+6. Run `task-check <task-file>` after filling the artifact when handoff readiness matters.
+7. In chat, report the task path, status, and unresolved questions only. Do not print the full artifact unless asked.
 
 ## Artifact Sections
 

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Quick Commit"
-  short_description: "Make clean Conventional Commits"
-  default_prompt: "Use $quick-commit to inspect the current diff and create a clean Conventional Commit."

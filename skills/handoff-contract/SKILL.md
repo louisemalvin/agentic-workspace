@@ -11,6 +11,8 @@ Use this skill before implementation, delegation to another agent, or switching 
 
 ## Required Contract
 
+If an active task artifact exists, run `task-check <task-file>` first. Use its output to identify missing or empty sections before editing.
+
 The active task artifact should make these fields explicit:
 
 - Scope: what the implementer should change.

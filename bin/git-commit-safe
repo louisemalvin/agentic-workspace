@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+usage: git-commit-safe [-m <message>] [--push] [--] <path>...
+
+Stages the provided paths, runs basic staged-diff checks, and creates a Git
+commit using the user's configured Git identity.
+
+The commit message must already follow Conventional Commits.
+USAGE
+}
+
+message=""
+push_after=0
+paths=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    -m)
+      if [[ $# -lt 2 ]]; then
+        printf 'missing value for -m\n' >&2
+        exit 2
+      fi
+      message="$2"
+      shift 2
+      ;;
+    --push)
+      push_after=1
+      shift
+      ;;
+    --)
+      shift
+      while [[ $# -gt 0 ]]; do
+        paths+=("$1")
+        shift
+      done
+      ;;
+    -*)
+      printf 'unknown option: %s\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+    *)
+      paths+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ -z "$message" ]]; then
+  printf 'missing commit message\n' >&2
+  usage >&2
+  exit 2
+fi
+
+if [[ "${#paths[@]}" -eq 0 ]]; then
+  printf 'provide explicit paths to stage\n' >&2
+  exit 2
+fi
+
+if [[ "$message" == *$'\nCo-authored-by:'* || "$message" == *$'\nGenerated-by:'* || "$message" == *$'\nSigned-off-by:'* ]]; then
+  printf 'commit message contains a prohibited attribution trailer\n' >&2
+  exit 1
+fi
+
+if ! printf '%s' "$message" | head -n 1 | grep -Eq '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([A-Za-z0-9._/-]+\))?(!)?: .+'; then
+  printf 'commit message does not look like Conventional Commits: %s\n' "$(printf '%s' "$message" | head -n 1)" >&2
+  exit 1
+fi
+
+for path in "${paths[@]}"; do
+  case "$path" in
+    .tasks|.tasks/*|*_Transcript.md|*.pem|*.key|*.env|.env|.env.*)
+      printf 'refusing to stage protected path: %s\n' "$path" >&2
+      exit 1
+      ;;
+  esac
+done
+
+git status --short
+git add -- "${paths[@]}"
+
+if git diff --cached --quiet; then
+  printf 'nothing staged after adding provided paths\n' >&2
+  exit 1
+fi
+
+git diff --cached --check
+git commit -m "$message"
+
+if [[ "$push_after" -eq 1 ]]; then
+  git push
+fi

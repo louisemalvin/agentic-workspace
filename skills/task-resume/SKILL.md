@@ -15,6 +15,7 @@ Use this skill when the user refers to existing work without naming the generate
 2. If exactly one unfinished task is listed, read it and continue from its `Handoff Notes`.
 3. If multiple unfinished tasks are listed, ask which task to continue.
 4. If no unfinished tasks are listed, ask for the next objective.
+5. After selecting a task, run `task-check <task-file>` when implementation or handoff is about to start.
 
 ## Resume Rules
 

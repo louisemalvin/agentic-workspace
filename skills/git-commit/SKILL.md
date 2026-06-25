@@ -1,9 +1,9 @@
 ---
-name: quick-commit
+name: git-commit
 description: Create concise Git commits using Conventional Commits. Use when the user asks Codex to commit, make a quick commit, propose a commit message, split staged changes into commits, clean up a commit message, or verify that a commit follows Conventional Commits and local authorship rules.
 ---
 
-# Quick Commit
+# Git Commit
 
 Use this skill to turn the current Git diff into one or more clean commits without adding AI attribution.
 
@@ -26,8 +26,19 @@ Use this skill to turn the current Git diff into one or more clean commits witho
    - Use imperative, lowercase descriptions without a trailing period.
 5. Add a body only when the commit needs context that is not obvious from the header.
 6. Add footers only when useful. For breaking changes, use `BREAKING CHANGE: <description>` or `!` in the header.
-7. Run a lightweight verification command that matches the change, at minimum `git diff --cached --check` when committing staged changes.
-8. Commit with `git commit`.
+7. Prefer `git-commit-safe` for the final mechanics:
+
+   ```bash
+   git-commit-safe -m "<type>[optional scope]: <description>" -- <path>...
+   ```
+
+8. If the user explicitly asked to push and the target branch is clear, pass `--push`:
+
+   ```bash
+   git-commit-safe -m "<type>[optional scope]: <description>" --push -- <path>...
+   ```
+
+Use raw `git` commands only when `git-commit-safe` is unavailable or the commit needs a multi-paragraph body.
 
 ## Authorship Rules
 

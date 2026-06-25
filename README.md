@@ -34,13 +34,15 @@ agents/
   AGENTS.md
 bin/
   agent-init
+  git-commit-safe
+  task-check
   task-init
   task-list
 skills/
+  git-commit/SKILL.md
   handoff-contract/SKILL.md
   lavish-planning/SKILL.md
   project-guide/SKILL.md
-  quick-commit/SKILL.md
   task-artifact/SKILL.md
   task-resume/SKILL.md
 templates/
@@ -62,6 +64,10 @@ README.md
 
 `task-list` prints unfinished task artifacts with status and next step. It is meant for agents to run when resuming work, so the user does not need to remember generated task filenames.
 
+`task-check` validates that a task artifact has the required sections for handoff-ready work.
+
+`git-commit-safe` stages explicit paths, checks the staged diff, rejects protected local files, and creates a Conventional Commit using the user's configured Git identity.
+
 The `project-guide` skill teaches agents to create or refresh project guides without polluting them with task-specific context.
 
 The `task-artifact` skill teaches agents to create or update compact task artifacts once discussion becomes concrete. The user should not need to say "freeze", "handoff", or "write a spec".
@@ -72,7 +78,7 @@ The `task-resume` skill teaches agents to run `task-list` and continue unfinishe
 
 The `lavish-planning` skill teaches agents to use Lavish Editor when a plan, diagram, comparison, report, code view, or UI/UX discussion is easier to review visually than as terminal markdown. Lavish is a planning surface; final decisions still belong in `.tasks/*.md`.
 
-The `quick-commit` skill teaches agents to make small Conventional Commits while preserving the user's configured Git author identity.
+The `git-commit` skill teaches agents to make small Conventional Commits while preserving the user's configured Git author identity.
 
 The workflow is designed to avoid token-heavy handoffs. Simple work should use only a compact `.tasks` artifact. Lavish is for cases where visual review prevents ambiguity; it should not duplicate a full markdown plan.
 
@@ -89,6 +95,8 @@ The default install links only the agent workflow pieces:
 
 ```text
 ~/.local/bin/agent-init
+~/.local/bin/git-commit-safe
+~/.local/bin/task-check
 ~/.local/bin/task-init
 ~/.local/bin/task-list
 ~/.config/ai-agents/AGENTS.md
@@ -166,7 +174,7 @@ This creates:
 Keep these concepts separate:
 
 - Personas: coordinator, implementer, reviewer, investigator.
-- Skills: conditional procedures such as `project-guide`, `task-artifact`, `handoff-contract`, `task-resume`, `lavish-planning`, and `quick-commit`.
+- Skills: conditional procedures such as `project-guide`, `task-artifact`, `handoff-contract`, `task-resume`, `lavish-planning`, and `git-commit`.
 - Runtime: shell sessions, Git worktrees, and local commands.
 
 For one task, talk to one main agent. It may create or update a task artifact, then implement from that file. For parallel tasks, a coordinator can create worktrees and spawn implementer sessions, but the handoff should remain file-based.
