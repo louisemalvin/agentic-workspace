@@ -1,0 +1,6 @@
+interface:
+  display_name: "Task Artifact"
+  short_description: "Create compact .tasks artifacts for concrete work."
+  default_prompt: "Use $task-artifact to capture this work in a compact task artifact."
+policy:
+  allow_implicit_invocation: true

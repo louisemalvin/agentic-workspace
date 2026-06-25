@@ -3,6 +3,17 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+usage() {
+  cat <<'USAGE'
+usage: ./install.sh
+
+Installs the harness-agnostic agent workflow.
+
+Options:
+  -h, --help  Show this help.
+USAGE
+}
+
 ensure_dir() {
   local dir="$1"
   mkdir -p "$dir"
@@ -34,7 +45,7 @@ link_dir() {
 
 install_skill() {
   local skill_name="$1"
-  local skill_source="$repo_root/.config/ai-agents/skills/$skill_name"
+  local skill_source="$repo_root/skills/$skill_name"
 
   link_dir "$skill_source" "$config_home/ai-agents/skills/$skill_name"
   link_dir "$skill_source" "$HOME/.agents/skills/$skill_name"
@@ -47,15 +58,32 @@ install_skill() {
   link_dir "$skill_source" "$HOME/.gemini/skills/$skill_name"
 }
 
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        printf 'unknown option: %s\n\n' "$1" >&2
+        usage >&2
+        exit 2
+        ;;
+    esac
+    shift
+  done
+}
+
 main() {
+  parse_args "$@"
+
   local config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
-  local global_agents_source="$repo_root/.config/ai-agents/AGENTS.md"
+  local global_agents_source="$repo_root/agents/AGENTS.md"
 
   ensure_dir "$HOME/.local/bin"
   ensure_dir "$HOME/.agents"
   ensure_dir "$HOME/.agents/skills"
-  ensure_dir "$config_home/ghostty"
-  ensure_dir "$config_home/tmux"
   ensure_dir "$config_home/ai-agents"
   ensure_dir "$config_home/ai-agents/skills"
   ensure_dir "$config_home/claude"
@@ -73,10 +101,12 @@ main() {
   ensure_dir "$HOME/.gemini"
   ensure_dir "$HOME/.gemini/skills"
 
-  link_file "$repo_root/.config/ghostty/config" "$config_home/ghostty/config"
-  link_file "$repo_root/.config/tmux/tmux.conf" "$config_home/tmux/tmux.conf"
-  link_file "$repo_root/.local/bin/agent-init" "$HOME/.local/bin/agent-init"
-  link_file "$repo_root/.local/bin/task-init" "$HOME/.local/bin/task-init"
+  chmod +x "$repo_root/bin/agent-init"
+  chmod +x "$repo_root/bin/task-init"
+  chmod +x "$repo_root/bin/task-list"
+  link_file "$repo_root/bin/agent-init" "$HOME/.local/bin/agent-init"
+  link_file "$repo_root/bin/task-init" "$HOME/.local/bin/task-init"
+  link_file "$repo_root/bin/task-list" "$HOME/.local/bin/task-list"
   link_file "$global_agents_source" "$config_home/ai-agents/AGENTS.md"
 
   # Agent prompt entry points intentionally point to one canonical AGENTS.md file.
@@ -93,9 +123,13 @@ main() {
 
   # Install shared skills into common harness-specific and neutral locations.
   install_skill "project-guide"
-  install_skill "task-plan"
+  install_skill "task-artifact"
+  install_skill "handoff-contract"
+  install_skill "task-resume"
+  install_skill "lavish-planning"
+  install_skill "quick-commit"
 
-  printf '\nDotfiles installation complete.\n'
+  printf '\nAgent workflow installation complete.\n'
 }
 
 main "$@"

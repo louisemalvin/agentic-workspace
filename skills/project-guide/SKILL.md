@@ -19,7 +19,7 @@ Use this skill to create or update a project-local `AGENTS.md` that any coding h
 4. Inspect the repository before filling sections. Use package files, README, config files, tests, and directory layout. Do not guess commands.
 5. Keep task-specific decisions out of `AGENTS.md`. Put active planning in `.tasks/*.md`.
 6. Keep `AGENTS.md` concise. Add only facts that should remain useful across many sessions.
-7. Include the workflow rules below so agents know to use task artifacts without waiting for a special user phrase.
+7. Include only the light workflow pointers below. Detailed task, handoff, resume, and visual-review behavior belongs in skills, not project memory.
 
 ## AGENTS.md Structure
 
@@ -55,12 +55,9 @@ List important directories and ownership boundaries.
 
 ## Workflow
 
-- Keep task-specific planning in .tasks/*.md.
-- When discussion produces a concrete implementation direction, create or update a task artifact automatically.
-- Do not require the user to say "freeze", "handoff", or "write a spec".
-- Before implementation, make sure the active task artifact has goal, decisions, acceptance criteria, and verification plan.
-- Update the active task artifact before handing work to another harness.
-- Verify behavior against acceptance criteria before calling work done.
+- Keep this file for stable project facts and repeated repo-specific lessons.
+- Keep task-specific planning in .tasks/*.md, not in this file.
+- Use installed task and handoff skills for task artifacts, implementation contracts, resume flow, and visual review.
 
 ## Task Artifacts
 
@@ -73,6 +70,7 @@ Each task artifact should include:
 - Decisions
 - Acceptance Criteria
 - Implementation Plan
+- Handoff Contract
 - Verification Plan
 - Status
 - Handoff Notes

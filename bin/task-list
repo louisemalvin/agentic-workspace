@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+tasks_dir=".tasks"
+
+if [[ ! -d "$tasks_dir" ]]; then
+  printf 'No .tasks directory found.\n'
+  exit 0
+fi
+
+mapfile -t task_files < <(
+  find "$tasks_dir" -maxdepth 1 -type f -name '*.md' -print |
+    sort -r
+)
+
+if [[ "${#task_files[@]}" -eq 0 ]]; then
+  printf 'No task artifacts found in .tasks.\n'
+  exit 0
+fi
+
+is_finished_status() {
+  local status="$1"
+  case "$(printf '%s' "$status" | tr '[:upper:]' '[:lower:]')" in
+    *"implemented and verified"*|*"done"*|*"complete"*|*"completed"*|*"cancelled"*|*"canceled"*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+section_body() {
+  local file="$1"
+  local section="$2"
+  awk -v section="$section" '
+    $0 == "## " section { in_section = 1; next }
+    in_section && /^## / { exit }
+    in_section { print }
+  ' "$file" |
+    sed '/^[[:space:]]*$/d'
+}
+
+first_content_line() {
+  sed -n '/[^[:space:]]/p' | head -n 1 | sed 's/^[[:space:]-]*//'
+}
+
+found=0
+
+for file in "${task_files[@]}"; do
+  title="$(sed -n '1s/^# //p' "$file")"
+  [[ -n "$title" ]] || title="$(basename "$file")"
+
+  status="$(section_body "$file" "Status" | first_content_line)"
+  [[ -n "$status" ]] || status="Unknown"
+
+  if is_finished_status "$status"; then
+    continue
+  fi
+
+  next_step="$(
+    section_body "$file" "Handoff Notes" |
+      sed -n 's/^[[:space:]-]*Next exact step:[[:space:]]*//p' |
+      head -n 1
+  )"
+  [[ -n "$next_step" ]] || next_step="Not recorded"
+
+  if [[ "$found" -eq 0 ]]; then
+    printf 'Unfinished tasks:\n'
+  fi
+
+  found=$((found + 1))
+  printf '\n[%d] %s\n' "$found" "$file"
+  printf 'title: %s\n' "$title"
+  printf 'status: %s\n' "$status"
+  printf 'next: %s\n' "$next_step"
+done
+
+if [[ "$found" -eq 0 ]]; then
+  printf 'No unfinished task artifacts found.\n'
+  exit 0
+fi
+
+printf '\nAgent instructions:\n'
+printf -- '- If exactly one unfinished task is listed, read it and continue from its Handoff Notes.\n'
+printf -- '- If multiple unfinished tasks are listed, ask the user which task to continue.\n'
+printf -- '- Treat the selected .tasks artifact as the source of truth; do not rely on prior chat unless recorded there.\n'

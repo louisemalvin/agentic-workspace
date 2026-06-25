@@ -2,8 +2,16 @@
 set -euo pipefail
 
 target="${1:-AGENTS.md}"
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-template="$script_dir/../../templates/AGENTS.md"
+source_path="${BASH_SOURCE[0]}"
+
+while [[ -L "$source_path" ]]; do
+  source_dir="$(cd -P "$(dirname "$source_path")" && pwd)"
+  source_path="$(readlink "$source_path")"
+  [[ "$source_path" != /* ]] && source_path="$source_dir/$source_path"
+done
+
+script_dir="$(cd -P "$(dirname "$source_path")" && pwd)"
+template="$script_dir/../templates/AGENTS.md"
 
 if [[ -e "$target" ]]; then
   printf '%s already exists; leaving it unchanged.\n' "$target"

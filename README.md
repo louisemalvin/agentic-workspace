@@ -1,61 +1,86 @@
-# Persistent Agentic Workspace
+# Agentic Workspace
 
-This repository is a portable dotfiles baseline for terminal-first AI coding work. It centralizes terminal settings, tmux persistence, shared agent preferences, project guides, and task artifacts so different coding harnesses can share one workflow across machines.
+Agentic Workspace is a portable workflow baseline for AI coding. It is designed to make different coding harnesses follow the same rules immediately: Codex, Claude Code, Gemini, OpenCode-compatible tools, and other agents that can read shared prompt files or skills.
 
-## Architectural Overview
+The project focuses on the agent workflow: global rules, project guides, task artifacts, and handoff conventions.
 
-The operating model is **coordinator and workers**. One user-facing coordinator owns the task boundary, keeps the plan coherent, and writes final decisions into durable files. Worker sessions can investigate, build, or validate, but their output is treated as bounded evidence rather than a new source of authority.
+## Why This Exists
 
-This avoids volatile chained-agent telephone loops, where each handoff compresses intent, loses filesystem state, and degrades after large context windows. A 180k-token context can still become unreliable when every agent carries an approximate transcript instead of a crisp boundary.
+Different agents often fail in different ways because each session starts with different context, different prompt files, and different handoff habits. This repository makes the workflow durable and harness-agnostic.
 
-Git worktrees are the isolation primitive. Each agent can work in its own checkout against the same repository history:
+The operating model is **coordinator and workers**:
 
-```bash
-git worktree add ../feature-agent feature-agent
-git worktree add ../review-agent review-agent
-```
+- One user-facing coordinator owns the task boundary.
+- Worker sessions can investigate, build, or validate.
+- Decisions, plans, and handoffs are written to files instead of hidden chat state.
+- Git worktrees provide isolation for parallel work.
 
-That gives each agent an isolated file boundary, independent build artifacts, and clean diffs. The coordinator reviews changes through Git and task artifacts rather than through a lossy conversation chain.
+This avoids chained-agent telephone loops where each handoff compresses intent, loses filesystem state, and turns prior decisions into vague summaries.
 
 ## Repository Layout
 
 ```text
-.config/
-  ai-agents/AGENTS.md
-  ai-agents/skills/project-guide/SKILL.md
-  ai-agents/skills/task-plan/SKILL.md
-  ghostty/config
-  tmux/tmux.conf
-.local/
-  bin/agent-init
-  bin/task-init
+agents/
+  AGENTS.md
+bin/
+  agent-init
+  task-init
+  task-list
+skills/
+  handoff-contract/SKILL.md
+  lavish-planning/SKILL.md
+  project-guide/SKILL.md
+  quick-commit/SKILL.md
+  task-artifact/SKILL.md
+  task-resume/SKILL.md
 templates/
   AGENTS.md
   task.md
+optional/
+  lavish/README.md
 install.sh
 README.md
 ```
 
-`.config/ai-agents/AGENTS.md` is the shared global baseline for child agents. `install.sh` links it into common global prompt locations so Claude, Codex, Gemini, OpenCode-compatible, and compatible tools can share the same foundational rules.
+## Core Concepts
 
-## Installation Protocol
+`agents/AGENTS.md` is the shared global baseline. The installer links it into common global prompt locations so multiple harnesses can start from the same rules.
 
-On a pristine machine:
+`agent-init` creates a project-local `AGENTS.md` from `templates/AGENTS.md` when a project does not already have one. Project guides are for stable facts: stack, commands, architecture, workflow rules, and known traps.
+
+`task-init` creates `.tasks/<date>-<slug>.md` from `templates/task.md`. Task artifacts are for active implementation plans, acceptance criteria, verification evidence, and handoff notes.
+
+`task-list` prints unfinished task artifacts with status and next step. It is meant for agents to run when resuming work, so the user does not need to remember generated task filenames.
+
+The `project-guide` skill teaches agents to create or refresh project guides without polluting them with task-specific context.
+
+The `task-artifact` skill teaches agents to create or update compact task artifacts once discussion becomes concrete. The user should not need to say "freeze", "handoff", or "write a spec".
+
+The `handoff-contract` skill teaches agents to finalize implementation contracts before coding, delegation, or switching harnesses.
+
+The `task-resume` skill teaches agents to run `task-list` and continue unfinished work without requiring the user to remember generated task filenames.
+
+The `lavish-planning` skill teaches agents to use Lavish Editor when a plan, diagram, comparison, report, code view, or UI/UX discussion is easier to review visually than as terminal markdown. Lavish is a planning surface; final decisions still belong in `.tasks/*.md`.
+
+The `quick-commit` skill teaches agents to make small Conventional Commits while preserving the user's configured Git author identity.
+
+The workflow is designed to avoid token-heavy handoffs. Simple work should use only a compact `.tasks` artifact. Lavish is for cases where visual review prevents ambiguity; it should not duplicate a full markdown plan.
+
+## Installation
 
 ```bash
-git clone <private-repo-url> ~/github/dotfiles
-cd ~/github/dotfiles
+git clone https://github.com/louisemalvin/agentic-workspace.git ~/github/agentic-workspace
+cd ~/github/agentic-workspace
 chmod +x install.sh
 ./install.sh
 ```
 
-The installer is idempotent. It creates the expected configuration directories and replaces managed files with symbolic links back into this repository:
+The default install links only the agent workflow pieces:
 
 ```text
-~/.config/ghostty/config
-~/.config/tmux/tmux.conf
 ~/.local/bin/agent-init
 ~/.local/bin/task-init
+~/.local/bin/task-list
 ~/.config/ai-agents/AGENTS.md
 ~/.config/AGENTS.md
 ~/.agents/AGENTS.md
@@ -69,11 +94,10 @@ The installer is idempotent. It creates the expected configuration directories a
 ~/.gemini/AGENTS.md
 ```
 
-It also links shared skills into neutral and common harness-specific skill directories:
+It also links shared skills into neutral and common harness-specific directories:
 
 ```text
-~/.config/ai-agents/skills/project-guide
-~/.config/ai-agents/skills/task-plan
+~/.config/ai-agents/skills/<skill>
 ~/.agents/skills/<skill>
 ~/.codex/skills/<skill>
 ~/.config/codex/skills/<skill>
@@ -84,27 +108,36 @@ It also links shared skills into neutral and common harness-specific skill direc
 ~/.gemini/skills/<skill>
 ```
 
-Harnesses that support this skill layout can load the skill directly. Harnesses that do not support skills still share the same global `AGENTS.md` and can use `agent-init` as the fallback project bootstrap command.
+Harnesses that support this skill layout can load the skills directly. Harnesses that do not support skills still share the global `AGENTS.md` and can use `agent-init` and `task-init`.
 
-Start or reload tmux after installation:
+## Optional Lavish Integration
+
+Lavish Editor is provided by `kunchenguid/lavish-axi`: https://github.com/kunchenguid/lavish-axi
+
+It can be installed as an upstream Agent Skills skill:
 
 ```bash
-tmux new -s main
-tmux source-file ~/.config/tmux/tmux.conf
+npx skills add kunchenguid/lavish-axi --skill lavish
 ```
+
+Lavish can also be used with no skill install by asking the agent to run:
+
+```bash
+npx -y lavish-axi <html-file>
+```
+
+Use Lavish for complex planning and review, then write the confirmed decisions back into the active `.tasks/*.md` artifact. See `optional/lavish/README.md` for the detailed integration contract.
 
 ## Project Initialization
 
-Harnesses should not require hand-written project context before they can work. If a project does not already have `AGENTS.md`, run:
+In any project that lacks an `AGENTS.md`:
 
 ```bash
 cd ~/projects/my-project
 agent-init
 ```
 
-This creates `AGENTS.md` only when it is missing. The local file is for stable project facts: stack, commands, architecture, workflow rules, and known traps. Task-specific planning belongs in `.tasks/*.md` so long planning sessions can be compressed into durable artifacts and resumed by any harness.
-
-The installed `project-guide` skill guides agents to do the same thing automatically: check for `AGENTS.md`, create it only when missing, keep it concise, and move task-specific context into `.tasks/*.md`.
+The generated file should stay concise and stable. Put task-specific planning in `.tasks/*.md`.
 
 To create a task artifact directly:
 
@@ -112,58 +145,42 @@ To create a task artifact directly:
 task-init "Improve onboarding empty state"
 ```
 
-This creates `.tasks/<date>-improve-onboarding-empty-state.md` from `templates/task.md`.
+This creates:
 
-The installed `task-plan` skill tells agents not to wait for a special phrase like "freeze the plan" before creating a task artifact. Once discussion has produced a concrete implementation direction, the agent should create or update `.tasks/<date>-<slug>.md`, then use that artifact as the implementation handoff.
-
-Visual planning tools such as Lavish can fit into this same pipeline. They improve review by making options easier to inspect than terminal chat, but the final decisions should still be written back into the active `.tasks` artifact so any harness can continue.
+```text
+.tasks/<date>-improve-onboarding-empty-state.md
+```
 
 ## Workflow Model
 
-Keep the concepts separate:
+Keep these concepts separate:
 
-- Personas: coordinator, implementer, or other session roles.
-- Skills: reusable procedures such as `project-guide` and `task-plan`.
-- Runtime: tmux sessions, Git worktrees, and shell commands.
+- Personas: coordinator, implementer, reviewer, investigator.
+- Skills: conditional procedures such as `project-guide`, `task-artifact`, `handoff-contract`, `task-resume`, `lavish-planning`, and `quick-commit`.
+- Runtime: shell sessions, Git worktrees, and local commands.
 
-For one task, talk to one main agent. It may use `task-plan` or a visual planning tool, then implement from the resulting artifact. For parallel tasks, a coordinator can create worktrees and spawn implementer sessions, but the handoff should still be file-based.
+For one task, talk to one main agent. It may create or update a task artifact, then implement from that file. For parallel tasks, a coordinator can create worktrees and spawn implementer sessions, but the handoff should remain file-based.
 
-## Terminal Persistence
+When resuming work, the agent should run `task-list`. If one unfinished task exists, continue from it. If several exist, ask which task to continue.
 
-tmux uses `Ctrl+a` as the prefix. Panes and windows open in the active directory:
+Example worktree setup:
 
-```text
-Ctrl+a |   split horizontally
-Ctrl+a -   split vertically
-Ctrl+a c   new window
-Ctrl+a h/j/k/l   move between panes
+```bash
+git worktree add ../feature-agent feature-agent
+git worktree add ../review-agent review-agent
 ```
 
-Mouse and touch tracking are enabled for scrolling, pane selection, and mobile terminal use.
+The coordinator reviews changes through Git diffs, commands, logs, and task artifacts rather than trusting conversational confidence.
 
-## Mobile Connectivity Matrix
-
-Use SSH when latency is stable and Mosh when the network changes frequently.
-
-| Client path | Command | Use case |
-| --- | --- | --- |
-| SSH attach | `ssh user@host -t 'tmux attach -t main || tmux new -s main'` | Directly resume the primary session. |
-| SSH named worktree | `ssh user@host -t 'cd ~/github/dotfiles && tmux attach -t dotfiles || tmux new -s dotfiles'` | Keep dotfiles work isolated. |
-| Mosh attach | `mosh user@host -- tmux attach -t main` | Roaming mobile network with an existing session. |
-| Mosh create-or-attach | `mosh user@host -- sh -lc 'tmux attach -t main || tmux new -s main'` | Roaming mobile network with automatic session creation. |
-
-Recommended mobile terminal apps should save one profile per host and use the create-or-attach command. That keeps running agents, builds, and logs alive when the client disconnects.
-
-## Operational Notes
+## Public Safety
 
 Do not commit tokens, API keys, SSH private keys, `.env` files, or machine-local credentials. Keep secrets in the platform keychain, shell environment, or a dedicated secrets manager.
 
-Use Git commits as durable checkpoints. For multi-agent work, prefer:
+Before publishing or tagging a release, check:
 
 ```bash
 git status --short
 git diff
-git commit -am "Describe the finished unit"
 ```
 
-When agents disagree, trust reproducible commands, tests, logs, and diffs over conversational confidence.
+Trust reproducible commands, tests, logs, and diffs over agent summaries.

@@ -1,12 +1,14 @@
 # {{TITLE}}
 
+Keep this artifact compact. Prefer short bullets. Omit or mark `N/A` for fields that do not apply. Do not paste long chat transcripts or full visual artifacts here.
+
 ## Goal
 
-Describe the user-visible outcome or concrete engineering result.
+One or two sentences describing the user-visible outcome or concrete engineering result.
 
 ## Context
 
-Capture current behavior, relevant constraints, and why this matters.
+Only the constraints and facts needed to implement safely.
 
 ## Decisions
 
@@ -18,7 +20,16 @@ Capture current behavior, relevant constraints, and why this matters.
 
 ## Implementation Plan
 
-- List the intended implementation steps.
+- List the intended implementation steps. Keep steps concrete and ordered.
+
+## Handoff Contract
+
+- Scope:
+- Out of scope:
+- Files or areas likely to change:
+- Interfaces or behavior contracts:
+- Risks and edge cases:
+- Open questions:
 
 ## Verification Plan
 

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Task Plan"
-  short_description: "Create .tasks planning artifacts."
-  default_prompt: "Use $task-plan to turn this discussion into an implementation task artifact."
-policy:
-  allow_implicit_invocation: true

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Task Resume"
+  short_description: "Resume unfinished work from .tasks artifacts."
+  default_prompt: "Use $task-resume to find and continue unfinished work."
+policy:
+  allow_implicit_invocation: true

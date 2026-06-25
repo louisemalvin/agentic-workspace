@@ -1,0 +1,6 @@
+interface:
+  display_name: "Handoff Contract"
+  short_description: "Finalize implementation contracts before coding or delegation."
+  default_prompt: "Use $handoff-contract to make this task ready for implementation."
+policy:
+  allow_implicit_invocation: true
