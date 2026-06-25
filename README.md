@@ -1,12 +1,22 @@
 # Agentic Workspace
 
-Agentic Workspace is a portable workflow baseline for AI coding. It is designed to make different coding harnesses follow the same rules immediately: Codex, Claude Code, Gemini, OpenCode-compatible tools, and other agents that can read shared prompt files or skills.
+Agentic Workspace is a lightweight, harness-agnostic workflow setup for AI coding. It keeps project context, task state, handoffs, and commit conventions in plain files so you can move between Codex, Claude Code, Gemini, OpenCode, agy, Reasonix, and whatever comes next without rebuilding your process around one tool.
 
-The project focuses on the agent workflow: global rules, project guides, task artifacts, and handoff conventions.
+The project focuses on portable workflow primitives: global rules, project guides, task artifacts, skills, and handoff conventions.
 
 ## Why This Exists
 
-Different agents often fail in different ways because each session starts with different context, different prompt files, and different handoff habits. This repository makes the workflow durable and harness-agnostic.
+AI coding tools are changing quickly. Each harness has its own config files, memory behavior, permission model, and extension system. A workflow that lives entirely inside one product becomes brittle as soon as you switch tools.
+
+This repository keeps the durable parts of the workflow outside any single harness:
+
+- Stable project context lives in `AGENTS.md`.
+- Active task state lives in `.tasks/*.md`.
+- Reusable procedures live in small skills.
+- Parallel work uses Git worktrees.
+- Commits remain the durable checkpoint.
+
+The goal is not to build another agent dispatcher. The goal is to make whichever agent you are using today start from the same context and leave behind the same useful artifacts.
 
 The operating model is **coordinator and workers**:
 
