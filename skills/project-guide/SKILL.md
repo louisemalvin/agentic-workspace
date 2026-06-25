@@ -7,7 +7,7 @@ description: Create or refresh project-level AGENTS.md guides for agent-agnostic
 
 ## Purpose
 
-Use this skill to create or update a project-local `AGENTS.md` that any coding harness can read before work starts. Follow the video workflow principle: global preferences stay tiny, `AGENTS.md` stores stable project context, and task-specific planning lives in artifacts.
+Use this skill to create or update a project-local `AGENTS.md` that any coding harness can read before work starts. Global preferences stay tiny, project `AGENTS.md` stores stable repo context, `docs/` stores human-durable project knowledge, and task-specific planning lives in `.tasks`.
 
 ## Workflow
 
@@ -19,7 +19,7 @@ Use this skill to create or update a project-local `AGENTS.md` that any coding h
 4. Inspect the repository before filling sections. Use package files, README, config files, tests, and directory layout. Do not guess commands.
 5. Keep task-specific decisions out of `AGENTS.md`. Put active planning in `.tasks/*.md`.
 6. Keep `AGENTS.md` concise. Add only facts that should remain useful across many sessions.
-7. Include only the light workflow pointers below. Detailed task, handoff, resume, and visual-review behavior belongs in skills, not project memory.
+7. Include only the light workflow pointers below. Detailed task, mode, and visual-review behavior belongs in scripts, modes, or skills, not the project guide.
 
 ## AGENTS.md Structure
 
@@ -56,12 +56,14 @@ List important directories and ownership boundaries.
 ## Workflow
 
 - Keep this file for stable project facts and repeated repo-specific lessons.
+- Put high-level project knowledge in docs/ when it should help humans and agents understand the project before reading code.
 - Keep task-specific planning in .tasks/*.md, not in this file.
-- Use installed task and handoff skills for task artifacts, implementation contracts, resume flow, and visual review.
+- Run work-context at workflow boundaries.
+- Run task-ready before implementation.
 
 ## Task Artifacts
 
-Use `.tasks/<date>-<slug>.md` for active task plans and handoffs.
+Use `.tasks/<date>-<slug>.md` for active task state, decisions, contracts, verification, and handoff notes.
 
 Each task artifact should include:
 
@@ -70,7 +72,7 @@ Each task artifact should include:
 - Decisions
 - Acceptance Criteria
 - Implementation Plan
-- Handoff Contract
+- Task Contract
 - Verification Plan
 - Status
 - Handoff Notes
@@ -90,7 +92,7 @@ Each task artifact should include:
 - If a task artifact is missing for active work, create `.tasks/<date>-<slug>.md` instead of expanding `AGENTS.md`.
 - If the user is reviewing options in chat or a visual planning tool, write the final decision back to the active task artifact.
 
-## Handoff Contract
+## Task State
 
 Before switching harnesses, starting implementation, or ending a session, update the active task artifact with:
 
@@ -101,4 +103,4 @@ Before switching harnesses, starting implementation, or ending a session, update
 - Errors encountered
 - Next exact step
 
-The next harness should read the global `AGENTS.md`, project `AGENTS.md`, and the active task artifact. It should not need the prior chat transcript.
+The next harness should read the global `AGENTS.md`, project `AGENTS.md`, relevant docs, and the active task artifact. It should not need the prior chat transcript.

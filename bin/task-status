@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+usage: task-status [task-file]
+
+Shows task status, next steps, and implementation readiness.
+USAGE
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ $# -gt 1 ]]; then
+  usage >&2
+  exit 2
+fi
+
+source_path="${BASH_SOURCE[0]}"
+
+while [[ -L "$source_path" ]]; do
+  source_dir="$(cd -P "$(dirname "$source_path")" && pwd)"
+  source_path="$(readlink "$source_path")"
+  [[ "$source_path" != /* ]] && source_path="$source_dir/$source_path"
+done
+
+script_dir="$(cd -P "$(dirname "$source_path")" && pwd)"
+task_ready="$script_dir/task-ready"
+
+section_body() {
+  local file="$1"
+  local section="$2"
+  awk -v section="$section" '
+    $0 == "## " section { in_section = 1; next }
+    in_section && /^## / { exit }
+    in_section { print }
+  ' "$file" |
+    sed '/^[[:space:]]*$/d'
+}
+
+first_content_line() {
+  sed -n '/[^[:space:]]/p' | head -n 1 | sed 's/^[[:space:]-]*//'
+}
+
+task_title() {
+  local file="$1"
+  local title
+
+  title="$(sed -n '1s/^# //p' "$file")"
+  [[ -n "$title" ]] || title="$(basename "$file")"
+  printf '%s' "$title"
+}
+
+task_status() {
+  local file="$1"
+  local status
+
+  status="$(section_body "$file" "Status" | first_content_line)"
+  [[ -n "$status" ]] || status="Unknown"
+  printf '%s' "$status"
+}
+
+task_next_step() {
+  local file="$1"
+  local next_step
+
+  next_step="$(
+    section_body "$file" "Handoff Notes" |
+      sed -n 's/^[[:space:]-]*Next exact step:[[:space:]]*//p' |
+      head -n 1
+  )"
+  [[ -n "$next_step" ]] || next_step="Not recorded"
+  printf '%s' "$next_step"
+}
+
+is_finished_status() {
+  local status="$1"
+  case "$(printf '%s' "$status" | tr '[:upper:]' '[:lower:]')" in
+    *"implemented and verified"*|*"done"*|*"complete"*|*"completed"*|*"cancelled"*|*"canceled"*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_evidence_status() {
+  local status="$1"
+  local normalized
+
+  normalized="$(printf '%s' "$status" | tr '[:upper:]' '[:lower:]')"
+  case "$normalized" in
+    *"not implemented"*)
+      return 1
+      ;;
+  esac
+
+  case "$normalized" in
+    *"verification remains"*|*"awaiting verification"*|*"implemented."*|*"implemented; "*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+readiness_label() {
+  local file="$1"
+  local status="$2"
+
+  if is_finished_status "$status"; then
+    printf 'done'
+  elif is_evidence_status "$status"; then
+    printf 'evidence'
+  elif "$task_ready" "$file" >/dev/null 2>&1; then
+    printf 'ready'
+  else
+    printf 'not ready'
+  fi
+}
+
+print_task() {
+  local file="$1"
+  local status
+  local readiness
+
+  status="$(task_status "$file")"
+  readiness="$(readiness_label "$file" "$status")"
+
+  printf '\n%s\n' "$file"
+  printf 'title: %s\n' "$(task_title "$file")"
+  printf 'status: %s\n' "$status"
+  printf 'readiness: %s\n' "$readiness"
+  printf 'next: %s\n' "$(task_next_step "$file")"
+}
+
+selected_task="${1:-}"
+
+if [[ -n "$selected_task" ]]; then
+  if [[ ! -f "$selected_task" ]]; then
+    printf 'missing task file: %s\n' "$selected_task" >&2
+    exit 1
+  fi
+
+  printf 'Task status:\n'
+  print_task "$selected_task"
+  exit 0
+fi
+
+if [[ ! -d ".tasks" ]]; then
+  printf 'No .tasks directory found.\n'
+  exit 0
+fi
+
+mapfile -t task_files < <(
+  find .tasks -maxdepth 1 -type f -name '*.md' -print |
+    sort -r
+)
+
+if [[ "${#task_files[@]}" -eq 0 ]]; then
+  printf 'No task artifacts found in .tasks.\n'
+  exit 0
+fi
+
+active=0
+done=0
+
+for file in "${task_files[@]}"; do
+  status="$(task_status "$file")"
+  if is_finished_status "$status"; then
+    done=$((done + 1))
+  else
+    active=$((active + 1))
+  fi
+done
+
+printf 'Task status summary:\n'
+printf 'active: %d\n' "$active"
+printf 'done: %d\n' "$done"
+printf 'total: %d\n' "${#task_files[@]}"
+
+for file in "${task_files[@]}"; do
+  print_task "$file"
+done

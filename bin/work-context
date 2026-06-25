@@ -1,0 +1,317 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+usage: work-context [task-file]
+
+Prints compact workflow context, required reads, readiness, and next action.
+USAGE
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ $# -gt 1 ]]; then
+  usage >&2
+  exit 2
+fi
+
+source_path="${BASH_SOURCE[0]}"
+
+while [[ -L "$source_path" ]]; do
+  source_dir="$(cd -P "$(dirname "$source_path")" && pwd)"
+  source_path="$(readlink "$source_path")"
+  [[ "$source_path" != /* ]] && source_path="$source_dir/$source_path"
+done
+
+script_dir="$(cd -P "$(dirname "$source_path")" && pwd)"
+repo_dir="$(cd -P "$script_dir/.." && pwd)"
+task_ready="$script_dir/task-ready"
+implementation_mode="$repo_dir/agents/modes/implementation.md"
+contract_filling_mode="$repo_dir/agents/modes/contract-filling.md"
+evidence_mode="$repo_dir/agents/modes/evidence.md"
+
+section_body() {
+  local file="$1"
+  local section="$2"
+  awk -v section="$section" '
+    $0 == "## " section { in_section = 1; next }
+    in_section && /^## / { exit }
+    in_section { print }
+  ' "$file" |
+    sed '/^[[:space:]]*$/d'
+}
+
+first_content_line() {
+  sed -n '/[^[:space:]]/p' | head -n 1 | sed 's/^[[:space:]-]*//'
+}
+
+is_finished_status() {
+  local status="$1"
+  case "$(printf '%s' "$status" | tr '[:upper:]' '[:lower:]')" in
+    *"implemented and verified"*|*"done"*|*"complete"*|*"completed"*|*"cancelled"*|*"canceled"*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+is_evidence_status() {
+  local status="$1"
+  local normalized
+
+  normalized="$(printf '%s' "$status" | tr '[:upper:]' '[:lower:]')"
+  case "$normalized" in
+    *"not implemented"*)
+      return 1
+      ;;
+  esac
+
+  case "$normalized" in
+    *"verification remains"*|*"awaiting verification"*|*"implemented."*|*"implemented; "*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+task_title() {
+  local file="$1"
+  local title
+
+  title="$(sed -n '1s/^# //p' "$file")"
+  [[ -n "$title" ]] || title="$(basename "$file")"
+  printf '%s' "$title"
+}
+
+task_status() {
+  local file="$1"
+  local status
+
+  status="$(section_body "$file" "Status" | first_content_line)"
+  [[ -n "$status" ]] || status="Unknown"
+  printf '%s' "$status"
+}
+
+task_next_step() {
+  local file="$1"
+  local next_step
+
+  next_step="$(
+    section_body "$file" "Handoff Notes" |
+      sed -n 's/^[[:space:]-]*Next exact step:[[:space:]]*//p' |
+      head -n 1
+  )"
+  [[ -n "$next_step" ]] || next_step="Not recorded"
+  printf '%s' "$next_step"
+}
+
+print_sources() {
+  printf '\nSources of truth:\n'
+  if [[ -f "AGENTS.md" ]]; then
+    printf -- '- AGENTS.md: project agent guide\n'
+  else
+    printf -- '- AGENTS.md: not found in current directory\n'
+  fi
+
+  if [[ -d "docs" ]]; then
+    doc_count="$(find docs -type f -name '*.md' -print | wc -l | tr -d '[:space:]')"
+    printf -- '- docs/: durable human-readable docs (%s markdown file(s))\n' "$doc_count"
+  else
+    printf -- '- docs/: not found\n'
+  fi
+
+  if [[ -d ".tasks" ]]; then
+    task_count="$(find .tasks -maxdepth 1 -type f -name '*.md' -print | wc -l | tr -d '[:space:]')"
+    printf -- '- .tasks/: active execution state (%s task file(s))\n' "$task_count"
+  else
+    printf -- '- .tasks/: not found\n'
+  fi
+}
+
+check_task_ready() {
+  local file="$1"
+
+  if [[ -x "$task_ready" ]]; then
+    "$task_ready" "$file"
+  else
+    bash "$task_ready" "$file"
+  fi
+}
+
+print_task_context() {
+  local file="$1"
+  local ready_output
+  local status
+
+  if [[ ! -f "$file" ]]; then
+    printf 'State: missing_task\n'
+    printf 'Task: %s\n' "$file"
+    printf 'Next: ask for a valid .tasks/*.md file or create one with task-init.\n'
+    exit 1
+  fi
+
+  printf 'State: task_selected\n'
+  printf 'Task: %s\n' "$file"
+  printf 'Title: %s\n' "$(task_title "$file")"
+  status="$(task_status "$file")"
+  printf 'Status: %s\n' "$status"
+  printf 'Next recorded: %s\n' "$(task_next_step "$file")"
+
+  printf '\nRequired reads:\n'
+  [[ -f "AGENTS.md" ]] && printf -- '- AGENTS.md\n'
+  printf -- '- %s\n' "$file"
+
+  if is_evidence_status "$status"; then
+    printf '\nReadiness: implementation already recorded\n'
+    printf 'Mode: evidence\n'
+    if [[ -f "$evidence_mode" ]]; then
+      printf 'Mode brief: %s\n' "$evidence_mode"
+    else
+      printf 'Mode brief: missing (%s)\n' "$evidence_mode"
+    fi
+    printf '\nRequired command:\n'
+    printf -- '- task-status %s\n' "$file"
+    printf '\nBlocked actions:\n'
+    printf -- '- New implementation work unless verification exposes a defect.\n'
+    printf -- '- Broad replanning unless the task contract is invalid.\n'
+    printf '\nNext: run or collect the recorded verification evidence, update the task artifact, then run work-context again if the task state changed.\n'
+    return
+  fi
+
+  if ready_output="$(check_task_ready "$file" 2>&1)"; then
+    printf '\nReadiness: ready\n'
+    printf 'Mode: implementation\n'
+    printf '\nReadiness command:\n'
+    printf -- '- task-ready %s\n' "$file"
+    if [[ -f "$implementation_mode" ]]; then
+      printf 'Mode brief: %s\n' "$implementation_mode"
+    else
+      printf 'Mode brief: missing (%s)\n' "$implementation_mode"
+    fi
+    printf '\nBlocked actions:\n'
+    printf -- '- Broad replanning unless the task contract is invalid.\n'
+    printf -- '- Unrelated refactors or cleanup.\n'
+    printf -- '- New dependencies without justification.\n'
+    printf '\nNext: read the required files, apply implementation mode, implement, verify, update the task artifact, then run work-context again if the task state changed.\n'
+  else
+    printf '\nReadiness: not ready\n'
+    printf '%s\n' "$ready_output"
+    printf '\nMode: contract_filling\n'
+    if [[ -f "$contract_filling_mode" ]]; then
+      printf 'Mode brief: %s\n' "$contract_filling_mode"
+    else
+      printf 'Mode brief: missing (%s)\n' "$contract_filling_mode"
+    fi
+    printf '\nRequired skill:\n'
+    printf -- '- task-artifact\n'
+    printf '\nRequired command:\n'
+    printf -- '- task-ready %s\n' "$file"
+    printf '\nBlocked actions:\n'
+    printf -- '- Implementation.\n'
+    printf '\nNext: fill missing contract fields, ask the user for unresolved decisions, then run work-context %s again.\n' "$file"
+  fi
+}
+
+selected_task="${1:-}"
+
+print_sources
+
+if [[ -n "$selected_task" ]]; then
+  printf '\n'
+  print_task_context "$selected_task"
+  exit 0
+fi
+
+if [[ ! -d ".tasks" ]]; then
+  printf '\nState: chat\n'
+  printf 'Active tasks: 0\n'
+  if [[ ! -f "AGENTS.md" ]]; then
+    printf 'Mode: project_init\n'
+    printf '\nRequired skill:\n'
+    printf -- '- project-guide\n'
+    printf '\nRecommended command:\n'
+    printf -- '- agent-init\n'
+    printf '\nBlocked actions:\n'
+    printf -- '- Implementation until project guide exists or the user explicitly asks to skip initialization.\n'
+    printf '\nNext: use the project-guide skill, inspect the repository, then run agent-init or create AGENTS.md with stable project facts. After initialization, run work-context again.\n'
+  else
+    printf 'Mode: chat_or_task_shaping\n'
+    printf '\nConditional skill:\n'
+    printf -- '- task-artifact\n'
+    printf '\nRecommended command when direction is concrete:\n'
+    printf -- '- task-init \"<task title>\"\n'
+    printf '\nBlocked actions:\n'
+    printf -- '- Implementation until a task artifact exists and task-ready passes.\n'
+    printf '\nNext: stay conversational while the user is exploring. If the user asks to build or change something, clarify scope, create a task artifact once direction is concrete, then run work-context again.\n'
+  fi
+  exit 0
+fi
+
+mapfile -t task_files < <(
+  find .tasks -maxdepth 1 -type f -name '*.md' -print |
+    sort -r
+)
+
+unfinished=()
+
+for file in "${task_files[@]}"; do
+  status="$(task_status "$file")"
+  if is_finished_status "$status"; then
+    continue
+  fi
+  unfinished+=("$file")
+done
+
+if [[ "${#unfinished[@]}" -eq 0 ]]; then
+  printf '\nState: chat\n'
+  printf 'Active tasks: 0\n'
+  if [[ ! -f "AGENTS.md" ]]; then
+    printf 'Mode: project_init\n'
+    printf '\nRequired skill:\n'
+    printf -- '- project-guide\n'
+    printf '\nRecommended command:\n'
+    printf -- '- agent-init\n'
+    printf '\nBlocked actions:\n'
+    printf -- '- Implementation until project guide exists or the user explicitly asks to skip initialization.\n'
+    printf '\nNext: use the project-guide skill, inspect the repository, then run agent-init or create AGENTS.md with stable project facts. After initialization, run work-context again.\n'
+  else
+    printf 'Mode: chat_or_task_shaping\n'
+    printf '\nConditional skill:\n'
+    printf -- '- task-artifact\n'
+    printf '\nRecommended command when direction is concrete:\n'
+    printf -- '- task-init \"<task title>\"\n'
+    printf '\nBlocked actions:\n'
+    printf -- '- Implementation until a task artifact exists and task-ready passes.\n'
+    printf '\nNext: stay conversational while the user is exploring. If the user asks to build or change something, clarify scope, create a task artifact once direction is concrete, then run work-context again.\n'
+  fi
+  exit 0
+fi
+
+if [[ "${#unfinished[@]}" -eq 1 ]]; then
+  printf '\nActive tasks: 1\n\n'
+  print_task_context "${unfinished[0]}"
+  exit 0
+fi
+
+printf '\nState: choose_task\n'
+printf 'Active tasks: %d\n' "${#unfinished[@]}"
+
+index=0
+for file in "${unfinished[@]}"; do
+  index=$((index + 1))
+  printf '\n[%d] %s\n' "$index" "$file"
+  printf 'title: %s\n' "$(task_title "$file")"
+  printf 'status: %s\n' "$(task_status "$file")"
+  printf 'next: %s\n' "$(task_next_step "$file")"
+done
+
+printf '\nMode: none\n'
+printf 'Next: ask the user which task to continue, then run work-context <task-file>.\n'

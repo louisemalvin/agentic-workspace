@@ -22,7 +22,7 @@ Only the constraints and facts needed to implement safely.
 
 - List the intended implementation steps. Keep steps concrete and ordered.
 
-## Handoff Contract
+## Task Contract
 
 - Scope:
 - Out of scope:
@@ -45,3 +45,4 @@ Not started.
 - Files changed:
 - Commands run:
 - Errors encountered:
+- Verification evidence:

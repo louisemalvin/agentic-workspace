@@ -43,6 +43,15 @@ link_dir() {
   printf 'linked %s -> %s\n' "$target" "$source"
 }
 
+remove_link() {
+  local target="$1"
+
+  if [[ -L "$target" ]]; then
+    rm -f "$target"
+    printf 'removed stale link %s\n' "$target"
+  fi
+}
+
 install_skill() {
   local skill_name="$1"
   local skill_source="$repo_root/skills/$skill_name"
@@ -66,6 +75,20 @@ install_bins() {
     chmod +x "$script"
     link_file "$script" "$HOME/.local/bin/$(basename "$script")"
   done
+}
+
+remove_installed_skill() {
+  local skill_name="$1"
+
+  remove_link "$config_home/ai-agents/skills/$skill_name"
+  remove_link "$HOME/.agents/skills/$skill_name"
+  remove_link "$HOME/.codex/skills/$skill_name"
+  remove_link "$config_home/codex/skills/$skill_name"
+  remove_link "$HOME/.claude/skills/$skill_name"
+  remove_link "$config_home/claude/skills/$skill_name"
+  remove_link "$config_home/opencode/skills/$skill_name"
+  remove_link "$config_home/antigravity/skills/$skill_name"
+  remove_link "$HOME/.gemini/skills/$skill_name"
 }
 
 parse_args() {
@@ -112,6 +135,7 @@ main() {
   ensure_dir "$HOME/.gemini/skills"
 
   install_bins
+  remove_link "$HOME/.local/bin/task-check"
   link_file "$global_agents_source" "$config_home/ai-agents/AGENTS.md"
 
   # Agent prompt entry points intentionally point to one canonical AGENTS.md file.
@@ -129,10 +153,10 @@ main() {
   # Install shared skills into common harness-specific and neutral locations.
   install_skill "project-guide"
   install_skill "task-artifact"
-  install_skill "handoff-contract"
-  install_skill "task-resume"
   install_skill "lavish-planning"
   install_skill "git-commit"
+  remove_installed_skill "handoff-contract"
+  remove_installed_skill "task-resume"
 
   printf '\nAgent workflow installation complete.\n'
 }

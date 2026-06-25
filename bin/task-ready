@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'USAGE'
+usage: task-ready <task-file>
+
+Checks whether a .tasks artifact has the structure and content needed for implementation.
+USAGE
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if [[ $# -ne 1 ]]; then
+  usage >&2
+  exit 2
+fi
+
+task_file="$1"
+
+if [[ ! -f "$task_file" ]]; then
+  printf 'missing task file: %s\n' "$task_file" >&2
+  exit 1
+fi
+
+section_body() {
+  local file="$1"
+  local section="$2"
+  awk -v section="$section" '
+    $0 == "## " section { in_section = 1; next }
+    in_section && /^## / { exit }
+    in_section { print }
+  ' "$file"
+}
+
+has_section() {
+  local file="$1"
+  local section="$2"
+  grep -qx "## $section" "$file"
+}
+
+has_content() {
+  sed '/^[[:space:]]*$/d' |
+    sed '/^[[:space:]]*-[[:space:]]*$/d' |
+    sed '/^[[:space:]]*N\/A[[:space:]]*$/Id' |
+    grep -q '[^[:space:]]'
+}
+
+subfield_value() {
+  local file="$1"
+  local section="$2"
+  local field="$3"
+
+  section_body "$file" "$section" |
+    sed -nE "s/^[[:space:]]*-[[:space:]]*$field:[[:space:]]*(.*)$/\\1/Ip" |
+    head -n 1 |
+    sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+}
+
+contract_section() {
+  if has_section "$task_file" "Task Contract"; then
+    printf 'Task Contract'
+  elif has_section "$task_file" "Handoff Contract"; then
+    printf 'Handoff Contract'
+  fi
+}
+
+is_placeholder() {
+  local value="$1"
+  case "$(printf '%s' "$value" | tr '[:upper:]' '[:lower:]')" in
+    ""|"todo"|"tbd"|"unknown"|"not recorded"|"none yet"|"n/a")
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+open_questions_resolved() {
+  local value="$1"
+  case "$(printf '%s' "$value" | tr '[:upper:]' '[:lower:]')" in
+    "n/a"|"n/a."|"na"|"na."|"none"|"none."|"no open questions"|"no open questions."|"resolved"|"resolved.")
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+missing=0
+
+require_section_content() {
+  local section="$1"
+
+  if ! has_section "$task_file" "$section"; then
+    printf 'missing section: %s\n' "$section"
+    missing=$((missing + 1))
+    return
+  fi
+
+  if ! section_body "$task_file" "$section" | has_content; then
+    printf 'missing implementation-ready content: %s\n' "$section"
+    missing=$((missing + 1))
+  fi
+}
+
+require_subfield() {
+  local section="$1"
+  local field="$2"
+  local value
+
+  value="$(subfield_value "$task_file" "$section" "$field")"
+  if is_placeholder "$value"; then
+    printf 'missing task contract field: %s\n' "$field"
+    missing=$((missing + 1))
+  fi
+}
+
+require_section_content "Goal"
+require_section_content "Context"
+require_section_content "Decisions"
+require_section_content "Acceptance Criteria"
+require_section_content "Implementation Plan"
+require_section_content "Verification Plan"
+require_section_content "Status"
+require_section_content "Handoff Notes"
+
+task_contract_section="$(contract_section)"
+
+if [[ -z "$task_contract_section" ]]; then
+  printf 'missing section: Task Contract\n'
+  missing=$((missing + 1))
+else
+  require_subfield "$task_contract_section" "Scope"
+  require_subfield "$task_contract_section" "Out of scope"
+  require_subfield "$task_contract_section" "Files or areas likely to change"
+  require_subfield "$task_contract_section" "Risks and edge cases"
+
+  open_questions="$(subfield_value "$task_file" "$task_contract_section" "Open questions")"
+  if [[ -z "$open_questions" ]]; then
+    printf 'missing task contract field: Open questions\n'
+    missing=$((missing + 1))
+  elif ! open_questions_resolved "$open_questions"; then
+    printf 'open questions not resolved: %s\n' "$open_questions"
+    missing=$((missing + 1))
+  fi
+fi
+
+if [[ "$missing" -eq 0 ]]; then
+  printf 'task ready for implementation: %s\n' "$task_file"
+  exit 0
+fi
+
+printf 'task not ready for implementation: %s (%d issue(s))\n' "$task_file" "$missing" >&2
+exit 1
