@@ -134,7 +134,7 @@ The next harness should be able to continue by reading the global guide, project
 
 ## Workflow Router
 
-`work-context` is the entry point for non-trivial work.
+`work-context` is the entry point for non-trivial work. Agentic Workspace installs workflow commands as the system interface; if they are unavailable after install, treat the installation as corrupted instead of probing for alternate paths.
 
 Run it:
 
@@ -148,21 +148,21 @@ Run it:
 `work-context` reports:
 
 - Sources of truth.
-- Active tasks.
+- Unfinished tasks and available task summaries.
 - Required reads.
 - Readiness state.
 - Current mode.
 - Blocked actions.
 - Next step.
 
-It replaces ad hoc resume logic. If there is one active task, it selects it. If several active tasks exist, it asks the user to choose. If no task exists, it keeps the session in chat or task-shaping mode.
+It replaces ad hoc resume logic. With no task argument, it keeps the session in discussion mode and lists unfinished tasks as available context. It does not select an unfinished task by itself. Task-specific readiness and mode guidance only apply after an explicit `work-context .tasks/<task-file>.md`.
 
 ## Workflow Phases
 
 The normal progression is:
 
 ```text
-project_init -> chat_or_task_shaping -> contract_filling -> implementation -> evidence -> done
+project_init -> discussion -> contract_filling -> implementation -> evidence -> done
 ```
 
 ### project_init
@@ -178,7 +178,7 @@ work-context
 
 The project guide should stay concise and stable.
 
-### chat_or_task_shaping
+### discussion
 
 Use while the user is exploring, asking questions, or deciding direction.
 

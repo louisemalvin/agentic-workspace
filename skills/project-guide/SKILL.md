@@ -14,12 +14,12 @@ Use this skill to create or update a project-local `AGENTS.md` that any coding h
 1. Check for an existing project guide:
    - Prefer `AGENTS.md`.
    - Also notice `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, or harness-specific files if present.
-2. If `AGENTS.md` is missing, run `agent-init` when available. If unavailable, create `AGENTS.md` with the structure below.
+2. If `AGENTS.md` is missing, run `agent-init` when available. Immediately after initialization, fill the project-local `AGENTS.md` by interviewing the user on open questions. If `agent-init` is unavailable, create `AGENTS.md` with the structure below.
 3. If harness-specific guidance files exist, preserve their content and recommend consolidating stable project facts into `AGENTS.md`.
 4. Inspect the repository before filling sections. Use package files, README, config files, tests, and directory layout. Do not guess commands.
 5. Keep task-specific decisions out of `AGENTS.md`. Put active planning in `.tasks/*.md`.
 6. Keep `AGENTS.md` concise. Add only facts that should remain useful across many sessions.
-7. Include only the light workflow pointers below. Detailed task, mode, and visual-review behavior belongs in scripts, modes, or skills, not the project guide.
+7. Avoid including bloated workflow or task artifact instructions in `AGENTS.md` (detailed task, mode, and visual-review behavior belongs in scripts, modes, or skills, not the project guide).
 
 ## AGENTS.md Structure
 
@@ -53,30 +53,6 @@ What this project is, who it serves, and the current product stage.
 
 List important directories and ownership boundaries.
 
-## Workflow
-
-- Keep this file for stable project facts and repeated repo-specific lessons.
-- Put high-level project knowledge in docs/ when it should help humans and agents understand the project before reading code.
-- Keep task-specific planning in .tasks/*.md, not in this file.
-- Run work-context at workflow boundaries.
-- Run task-ready before implementation.
-
-## Task Artifacts
-
-Use `.tasks/<date>-<slug>.md` for active task state, decisions, contracts, verification, and handoff notes.
-
-Each task artifact should include:
-
-- Goal
-- Context
-- Decisions
-- Acceptance Criteria
-- Implementation Plan
-- Task Contract
-- Verification Plan
-- Status
-- Handoff Notes
-
 ## Known Traps
 
 - Add repeated agent mistakes here after they happen.
@@ -91,16 +67,3 @@ Each task artifact should include:
 - Record repeated mistakes as short `Known Traps` bullets.
 - If a task artifact is missing for active work, create `.tasks/<date>-<slug>.md` instead of expanding `AGENTS.md`.
 - If the user is reviewing options in chat or a visual planning tool, write the final decision back to the active task artifact.
-
-## Task State
-
-Before switching harnesses, starting implementation, or ending a session, update the active task artifact with:
-
-- Current status
-- Files changed
-- Decisions made
-- Commands run
-- Errors encountered
-- Next exact step
-
-The next harness should read the global `AGENTS.md`, project `AGENTS.md`, relevant docs, and the active task artifact. It should not need the prior chat transcript.
